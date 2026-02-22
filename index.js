@@ -225,10 +225,11 @@ async function callSendAPI(psid, response, replyMid = null) {
 app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
 
 const PORT = process.env.PORT || 1337;
-app.listen(PORT, () => {
+app.listen('0.0.0.0', () => {
   console.log(`🚀 Webhook live on ${PORT}`);
   setMessengerProfile();
 });
+
 
 
 
