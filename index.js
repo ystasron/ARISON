@@ -12,6 +12,7 @@ const tiktokCommand = require("./funcs/tiktok.js");
 const lyricsCommand = require("./funcs/lyrics.js");
 const developerCommand = require("./funcs/owner.js");
 const mcuCommand = require("./funcs/mcu.js");
+const quizCommand = require("./funcs/quiz.js");
 
 const app = express().use(express.json());
 
@@ -43,7 +44,8 @@ async function setMessengerProfile() {
               { name: "/song", description: "Find and send music" },
               { name: "/mcu", description: "See the next Marvel movie countdown" },
               { name: "/menu", description: "Show the interactive quick menu" }, 
-              { name: "/lyrics", description: "Find and send song lyrics" }
+              { name: "/lyrics", description: "Find and send song lyrics" },
+              { name: "/quiz", description: "Fetch random question" }
             ]
           }
         ],
@@ -143,6 +145,24 @@ function handlePayload(senderId, payload, messageMid) {
 
     case "LYRICS_PAYLOAD":
       return callSendAPI(senderId, { text: "🎵 Please type the song name. Example: /lyrics Attention" }, messageMid);
+
+    case "QUIZ_CORRECT":
+      return callSendAPI(senderId, { text: "✅ Correct!" }, messageMid);
+
+    case "QUIZ_WRONG":
+     return callSendAPI(senderId, {
+    text: "❌ Wrong! Better luck next time!",
+    quick_replies: [
+  {
+    content_type: "text",
+    title: "Try another one",
+    payload: "QUIZ_PAYLOAD",
+  },
+]
+  }, messageMid);
+
+    case "QUIZ_PAYLOAD":
+  return quizCommand(senderId, (id, msg) => callSendAPI(id, msg, messageMid));
   }
 }
 
@@ -164,6 +184,7 @@ async function handleMessage(psid, text, mid) {
         { content_type: "text", title: "MCU", payload: "MCU_PAYLOAD" },
         { content_type: "text", title: "SONG", payload: "SONG_PAYLOAD" },
         { content_type: "text", title: "LYRICS", payload: "LYRICS_PAYLOAD" },
+        { content_type: "text", title: "QUIZ", payload: "QUIZ_PAYLOAD" },
       ],
     }, mid);
   }
@@ -175,6 +196,7 @@ async function handleMessage(psid, text, mid) {
   if (input === "/developer") return developerCommand(psid, (id, msg) => callSendAPI(id, msg, mid));
   if (input === "/mcu") return mcuCommand(psid, (id, msg) => callSendAPI(id, msg, mid));
   if (input === "hi" || input === "hello") return callSendAPI(psid, { text: "Hello!" }, mid);
+  if (input === "/quiz") return quizCommand(psid, (id, msg) => callSendAPI(id, msg, mid));
 
   if (input.startsWith("/song")) {
     const query = text.split(" ").slice(1).join(" ");
@@ -229,6 +251,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Webhook live on ${PORT}`);
   setMessengerProfile();
 });
+
 
 
 
