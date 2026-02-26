@@ -31,14 +31,6 @@ module.exports = async function (psid, callSendAPI) {
       payload: opt === correctAnswer ? "QUIZ_CORRECT" : `QUIZ_WRONG:${correctAnswer}`,
     }));
 
-    // 4️⃣ Send the question
-    // Added a simple "Exit" button so users aren't stuck in a quiz loop
-    quick_replies.push({
-      content_type: "text",
-      title: "Exit Quiz ❌",
-      payload: "HELP_PAYLOAD"
-    });
-
     await callSendAPI(psid, {
       text: `🧠 [General Knowledge]\n\n${question}`,
       quick_replies,
