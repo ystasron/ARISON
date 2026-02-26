@@ -123,6 +123,23 @@ app.post("/webhook", (req, res) => {
 
 // --- Shared Payload Handler ---
 function handlePayload(senderId, payload, messageMid) {
+  // 1. Handle dynamic payloads (like QUIZ_WRONG:Answer) first
+  if (payload.startsWith("QUIZ_WRONG:")) {
+    const correctAnswer = payload.split(":")[1]; // Gets the text after the colon
+
+    return callSendAPI(senderId, {
+      text: `❌ Wrong! The correct answer was: ${correctAnswer}.`,
+      quick_replies: [
+        {
+          content_type: "text",
+          title: "Try another one",
+          payload: "QUIZ_PAYLOAD",
+        },
+      ]
+    }, messageMid);
+  }
+
+  // 2. Handle static payloads
   switch (payload) {
     case "GET_STARTED_PAYLOAD":
       return callSendAPI(
@@ -147,22 +164,19 @@ function handlePayload(senderId, payload, messageMid) {
       return callSendAPI(senderId, { text: "🎵 Please type the song name. Example: /lyrics Attention" }, messageMid);
 
     case "QUIZ_CORRECT":
-      return callSendAPI(senderId, { text: "✅ Correct!" }, messageMid);
-
-    case "QUIZ_WRONG":
-     return callSendAPI(senderId, {
-    text: "❌ Wrong! Better luck next time!",
-    quick_replies: [
-  {
-    content_type: "text",
-    title: "Try another one",
-    payload: "QUIZ_PAYLOAD",
-  },
-]
-  }, messageMid);
+      return callSendAPI(senderId, { 
+        text: "✅ Correct!", 
+        quick_replies: [
+          {
+            content_type: "text",
+            title: "Try another one",
+            payload: "QUIZ_PAYLOAD",
+          },
+        ] 
+      }, messageMid);
 
     case "QUIZ_PAYLOAD":
-  return quizCommand(senderId, (id, msg) => callSendAPI(id, msg, messageMid));
+      return quizCommand(senderId, (psid, msg) => callSendAPI(psid, msg, messageMid));
   }
 }
 
@@ -251,6 +265,7 @@ app.listen(PORT, () => {
   console.log(`🚀 Webhook live on ${PORT}`);
   setMessengerProfile();
 });
+
 
 
 
