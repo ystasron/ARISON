@@ -2,29 +2,37 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 
+// Compiled once at module load
+const TIKTOK_REGEX = /https?:\/\/(www\.|vm\.|vt\.)?tiktok\.com\/[^\s]+/;
+const LIMIT = 45 * 1024 * 1024; // 45MB
+
+const dir = path.join(__dirname, "..", "temp", "tiktok");
+fs.mkdirSync(dir, { recursive: true }); // idempotent, no existsSync needed
+
+const cleanup = (filePath) => fs.rm(filePath, () => {});
+
 module.exports = async function (psid, callSendAPI, text) {
-  const tiktokRegex = /https?:\/\/(www\.|vm\.|vt\.)?tiktok\.com\/[^\s]+/;
-  const match = text.match(tiktokRegex);
-  const link = match ? match[0] : null;
+  const match = text.match(TIKTOK_REGEX);
+  if (!match) return;
 
-  if (!link) return;
-
-  const dir = path.join(__dirname, "..", "temp", "tiktok");
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
+  const link = match[0];
   const filePath = path.join(dir, `${Date.now()}.mp4`);
 
   try {
+    const { data } = await axios.get(
+      `https://tikdownpro.vercel.app/api/download?url=${encodeURIComponent(link)}`,
+    );
 
-    const apiUrl = `https://tikdownpro.vercel.app/api/download?url=${encodeURIComponent(link)}`;
-    const { data } = await axios.get(apiUrl);
-
-    // ✅ Validate response properly
-    if (!data || data.status !== true || !Array.isArray(data.video) || !data.video[0]) {
+    if (
+      !data ||
+      data.status !== true ||
+      !Array.isArray(data.video) ||
+      !data.video[0]
+    ) {
       throw new Error("Invalid API response structure");
     }
 
-    const videoUrl = data.video[0]; // ✅ FIXED
+    const videoUrl = data.video[0];
 
     const response = await axios({
       method: "get",
@@ -37,50 +45,43 @@ module.exports = async function (psid, callSendAPI, text) {
       },
     });
 
-    const writer = fs.createWriteStream(filePath);
-    response.data.pipe(writer);
-
+    // Stream to disk with early size abort — avoids downloading oversized files
     await new Promise((resolve, reject) => {
+      let totalBytes = 0;
+      const writer = fs.createWriteStream(filePath);
+
+      response.data.on("data", (chunk) => {
+        totalBytes += chunk.length;
+        if (totalBytes > LIMIT) {
+          writer.destroy();
+          response.data.destroy();
+          reject(new Error("FILE_TOO_LARGE"));
+        }
+      });
+
+      response.data.pipe(writer);
       writer.on("finish", resolve);
       writer.on("error", reject);
     });
 
-    if (!fs.existsSync(filePath)) {
-      throw new Error("File not created");
-    }
-
-    const stats = fs.statSync(filePath);
-
-    // Messenger 45MB limit
-    if (stats.size > 45 * 1024 * 1024) {
-      fs.unlinkSync(filePath);
-      throw new Error("Video exceeds 25MB Messenger limit");
-    }
-
     await callSendAPI(psid, {
-      attachment: {
-        type: "video",
-        payload: {},
-      },
+      attachment: { type: "video", payload: {} },
       filedata: filePath,
     });
 
-    // Cleanup
-    setTimeout(() => {
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }, 10000);
-
+    cleanup(filePath);
   } catch (err) {
+    cleanup(filePath);
     console.error("TikTok Handler Error:", err.message);
 
-    if (fs.existsSync(filePath)) {
-      try { fs.unlinkSync(filePath); } catch {}
+    if (err.message === "FILE_TOO_LARGE") {
+      return callSendAPI(psid, {
+        text: "❌ Video is too large to send via Messenger (45MB limit).",
+      });
     }
 
-    await callSendAPI(psid, {
+    callSendAPI(psid, {
       text: "❌ Unable to download this TikTok video.",
     });
   }
 };
-
-
