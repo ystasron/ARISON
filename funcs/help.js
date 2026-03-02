@@ -10,26 +10,48 @@ module.exports = (sender_psid, callSendAPI) => {
   ];
 
   const secondMessages = [
-    "/help - open this detailed help message to see all available commands\n/developer - learn more about the bot's creator\n/menu - explore commands quickly through interactive quick replies\n/mcu - check out the upcoming MCU movie details\n/song - search for a song and get it sent to you\n/lyrics - find lyrics for any song you like",
+`You can ask me anything at any time — just mention me or include "ARISON" in your message, and I’ll respond with AI-powered assistance. Whether you’re looking for answers, ideas, entertainment, or just a fun conversation, I’m here to help!
 
-    "/help - show the complete help info with all commands\n/developer - discover who developed this bot and their info\n/menu - browse all commands conveniently with quick replies\n/mcu - get the latest info on the next MCU movie\n/song - search for your favorite songs and receive them instantly\n/lyrics - fetch the lyrics for any song you want",
+Here’s a list of commands you can use to get started:
 
-    "/help - access the help message with instructions for every command\n/developer - view information about the bot developer\n/menu - see a quick list of all commands available\n/mcu - get details on the upcoming MCU movie release\n/song - find and send music directly to you\n/lyrics - get the full lyrics for any song you request",
+/help – Open this detailed help message anytime to view all available commands and features.
+/menu – Browse commands quickly through interactive quick replies for a smoother experience.
+/song – Search for songs by title, artist, or genre, and I’ll send them straight to you.
+/lyrics – Get the full lyrics of your favorite tracks — just type the song title (you can include the artist too).
+/quiz – Challenge yourself with interactive quiz questions and test your knowledge on different topics.
+/mcu – Explore details about upcoming Marvel Cinematic Universe releases and related updates.
+/developer – Learn more about the creator behind this AI and the inspiration that brought it to life.
 
-    "/help - open the full help guide with command explanations\n/developer - learn about who created this bot and their role\n/menu - explore commands using quick replies for faster navigation\n/mcu - check out the next MCU movie schedule and info\n/song - search and receive songs right here\n/lyrics - retrieve complete song lyrics instantly",
+Feel free to explore, experiment, and combine commands to discover music, information, and interactive features with ease. I’m always ready to make your chat experience smarter, faster, and more fun.`,
 
-    "/help - display a detailed help message with all the bot commands\n/developer - information about the developer behind this bot\n/menu - view commands quickly through the interactive menu\n/mcu - find out the details about the next MCU movie\n/song - search for and get songs sent directly to you\n/lyrics - obtain lyrics for any song you’re interested in",
+`Need something? Just mention me or type "ARISON" anywhere in your message, and I’ll jump in with AI-powered assistance. From answers and inspiration to entertainment and fun chats, I’ve got you covered!
 
-    "/help - get access to the help message with instructions\n/developer - see who created me and learn more about them\n/menu - list all available commands with ease\n/mcu - upcoming MCU movie info and details\n/song - search and send your favorite songs\n/lyrics - fetch lyrics for any song you want",
+Here’s a list of commands you can use to get started:
 
-    "/help - open the comprehensive help guide for all commands\n/developer - get to know the developer behind this bot\n/menu - quickly view commands via interactive quick replies\n/mcu - find out about the next MCU movie release schedule\n/song - search for songs and send them to yourself\n/lyrics - get song lyrics instantly",
+/help – View the complete help guide with all commands and features explained.
+/menu – Access commands quickly using interactive quick replies.
+/song – Find songs by title, artist, or genre and receive them instantly.
+/lyrics – Retrieve full lyrics for your favorite songs (include the artist if needed).
+/quiz – Take part in interactive quizzes and test your knowledge.
+/mcu – Discover updates and details about upcoming Marvel Cinematic Universe releases.
+/developer – Learn about the creator of this AI and the inspiration behind it.
 
-    "/help - see the help message with all instructions and commands\n/developer - check who developed this bot and their details\n/menu - quick access to all commands in one place\n/mcu - info on the next MCU movie release\n/song - find and send songs quickly\n/lyrics - fetch lyrics for any song easily",
+Try different commands and explore all the features available. I’m always ready to respond!`,
 
-    "/help - view all help commands with explanations\n/developer - learn who developed this bot and their background\n/menu - access all commands conveniently in one place\n/mcu - next MCU movie details at a glance\n/song - search songs and have them delivered to you\n/lyrics - find lyrics for your favorite songs",
+`Just include "ARISON" in your message and I’ll respond instantly with AI-powered assistance. Whether you’re searching for knowledge, entertainment, or something creative, I’m here whenever you need me!
 
-    "/help - open the help menu with full command details\n/developer - who developed this bot and their info\n/menu - browse commands easily via quick replies\n/mcu - next MCU movie info and updates\n/song - find and send songs directly\n/lyrics - fetch the complete lyrics for any song",
-  ];
+Here’s a list of commands you can use to get started:
+
+/help – Access the detailed help section with all commands listed.
+/menu – Quickly browse features using interactive replies.
+/song – Search and receive songs directly in chat.
+/lyrics – Fetch accurate lyrics for any song you choose.
+/quiz – Test your skills with engaging quiz questions.
+/mcu – Explore information about upcoming Marvel Cinematic Universe films.
+/developer – Learn more about the creator behind this AI system.
+
+Explore freely, combine features, and enjoy a smarter chat experience with me by your side!`
+];
 
   // Pick random phrases
   const firstMessage =
@@ -45,3 +67,4 @@ module.exports = (sender_psid, callSendAPI) => {
     callSendAPI(sender_psid, { text: secondMessage });
   }, 1000);
 };
+
