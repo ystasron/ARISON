@@ -1,6 +1,5 @@
 const axios = require("axios");
 const fs = require("fs");
-const fsPromises = require("fs").promises;
 const path = require("path");
 
 const messages = [
@@ -12,9 +11,18 @@ const messages = [
 ];
 
 const LIMIT = 25 * 1024 * 1024; // 25MB
+const MAX_DURATION_SECONDS = 600; // 10 minutes
 
 const dirPath = path.join(__dirname, "..", "temp", "song");
-fs.mkdirSync(dirPath, { recursive: true }); // mkdirSync with recursive is already idempotent
+fs.mkdirSync(dirPath, { recursive: true });
+
+const parseDuration = (timestamp) => {
+  if (!timestamp) return 0;
+  const parts = timestamp.split(":").map(Number);
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  return 0;
+};
 
 module.exports = async (sender_psid, callSendAPI, messageText) => {
   const query = messageText.replace(/^\/?song\s+/i, "").trim();
@@ -23,40 +31,46 @@ module.exports = async (sender_psid, callSendAPI, messageText) => {
     return callSendAPI(sender_psid, { text: "⚠️ Usage: /song [song name]" });
   }
 
-  const mp3Path = path.join(dirPath, `song_${Date.now()}.mp3`);
+  const mp3Path = path.join(dirPath, `song_${Date.now()}.m4a`);
   const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-
   const cleanup = () => fs.rm(mp3Path, () => {});
 
   try {
-    // Send status + fetch metadata in parallel
-    const [, { data }] = await Promise.all([
+    // Send status + search in parallel
+    const [, searchResponse] = await Promise.all([
       callSendAPI(sender_psid, { text: `⏳ ${randomMessage}` }),
       axios.get(
-        `https://betadash-api-swordslush-production.up.railway.app/spt?title=${encodeURIComponent(query)}`,
+        `https://mostakim.onrender.com/mostakim/ytSearch?search=${encodeURIComponent(query)}`,
         { timeout: 60000 },
       ),
     ]);
 
-    if (!data || !data.download_url) throw new Error("Invalid API response");
+    const filteredVideos = searchResponse.data.filter(
+      (video) => parseDuration(video.timestamp) < MAX_DURATION_SECONDS,
+    );
 
-    const title = data.title || "Unknown Title";
-    const artist = data.artists || "Unknown Artist";
+    if (!filteredVideos.length) throw new Error("NO_RESULTS");
 
-    const durationMs = Number(data.duration) || 0;
-    const totalSeconds = Math.floor(durationMs / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = String(totalSeconds % 60).padStart(2, "0");
+    const selectedVideo = filteredVideos[0];
+    const title = selectedVideo.title || "Unknown Title";
+    const duration = selectedVideo.timestamp || "0:00";
 
-    // Stream directly to disk — no full-file buffer in RAM
-    const audioRes = await axios.get(data.download_url, {
+    // Get audio download URL
+    const apiResponse = await axios.get(
+      `https://mostakim.onrender.com/m/sing?url=${encodeURIComponent(selectedVideo.url)}`,
+      { timeout: 60000 },
+    );
+
+    if (!apiResponse.data?.url) throw new Error("Invalid API response");
+
+    // Stream directly to disk, abort early if over 25MB
+    const audioRes = await axios.get(apiResponse.data.url, {
       responseType: "stream",
       timeout: 0,
       maxRedirects: 10,
       headers: { "User-Agent": "Mozilla/5.0" },
     });
 
-    // Write stream + early size abort
     await new Promise((resolve, reject) => {
       let totalBytes = 0;
       const writer = fs.createWriteStream(mp3Path);
@@ -80,8 +94,7 @@ module.exports = async (sender_psid, callSendAPI, messageText) => {
       text:
         `🎧 𝑨.𝑹.𝑰.𝑺.𝑶.𝑵 𝑺𝑷𝑬𝑨𝑲𝑬𝑹𝑺\n\n` +
         `🎵 Title: ${title}\n` +
-        `🎤 Artist: ${artist}\n` +
-        `🕒 Duration: ${minutes}:${seconds}`,
+        `🕒 Duration: ${duration}`,
     });
 
     await callSendAPI(sender_psid, {
@@ -97,6 +110,12 @@ module.exports = async (sender_psid, callSendAPI, messageText) => {
     if (err.message === "FILE_TOO_LARGE") {
       return callSendAPI(sender_psid, {
         text: "❌ File exceeds 25MB limit. Try a shorter track.",
+      });
+    }
+
+    if (err.message === "NO_RESULTS") {
+      return callSendAPI(sender_psid, {
+        text: "❌ No results found under 10 minutes. Try a different search.",
       });
     }
 
