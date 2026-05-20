@@ -12,6 +12,7 @@ const lyricsCommand = require("./funcs/lyrics.js");
 const developerCommand = require("./funcs/owner.js");
 const mcuCommand = require("./funcs/mcu.js");
 const quizCommand = require("./funcs/quiz.js");
+const configsCommand = require("./funcs/configs.js");
 
 const app = express().use(express.json());
 
@@ -53,6 +54,7 @@ async function setMessengerProfile() {
               { name: "/menu", description: "Show the interactive quick menu" },
               { name: "/lyrics", description: "Find and send song lyrics" },
               { name: "/quiz", description: "Fetch random question" },
+              { name: "/configs", description: "Get available data bypassing methods" },
             ],
           },
         ],
@@ -169,6 +171,8 @@ function handlePayload(senderId, payload, messageMid) {
       return cmd(mcuCommand);
     case "QUIZ_PAYLOAD":
       return cmd(quizCommand);
+    case "CONFIGS_PAYLOAD":
+      return cmd(configsCommand);
 
     case "SONG_PAYLOAD":
       return send({
@@ -220,6 +224,7 @@ async function handleMessage(psid, text, mid) {
         { content_type: "text", title: "SONG", payload: "SONG_PAYLOAD" },
         { content_type: "text", title: "LYRICS", payload: "LYRICS_PAYLOAD" },
         { content_type: "text", title: "QUIZ", payload: "QUIZ_PAYLOAD" },
+        { content_type: "text", title: "CONFIGS", payload: "CONFIGS_PAYLOAD" },
       ],
     });
   }
@@ -229,6 +234,7 @@ async function handleMessage(psid, text, mid) {
   if (input === "/developer") return cmd(developerCommand);
   if (input === "/mcu") return cmd(mcuCommand);
   if (input === "/quiz") return cmd(quizCommand);
+  if (input === "/configs") return cmd(configsCommand);
   if (input === "hi" || input === "hello") return send({ text: "Hello!" });
 
   if (input.startsWith("/song")) {
