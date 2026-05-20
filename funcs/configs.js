@@ -1,7 +1,6 @@
-
 module.exports = async function (sender_psid, callSendAPI) {
   try {
-    // 1. Add User-Agent header to bypass 403 Forbidden
+    // Fetch with User-Agent to bypass 403 Forbidden
     const response = await fetch("https://www.getroned.online/configs/configs.json", {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -12,17 +11,27 @@ module.exports = async function (sender_psid, callSendAPI) {
     
     const configs = await response.json();
 
+    // Format dates to Month Day, Year
+    const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        month: "long",
+        day: "2-digit",
+        year: "numeric"
+      });
+    };
+
+    // Map each object to a formatted string
     const summaryList = configs.map(item => 
       `🌍 ${item.country} ${item.flag}\n` +
       `🎁 Promo: ${item.promo}\n` +
-      `⏳ Expiry: ${item.expiry}\n` +
+      `⏳ Expiry: ${formatDate(item.expiry)}\n` +
       `--------------------------`
     ).join("\n");
 
-    const message = `📋 **Available Configurations**:\n\n${summaryList}`;
+    const message = `📋 Available Configurations:\n\n${summaryList}\n\nYou can download them at configs.getroned.online`;
 
-    // 2. Ensure payload matches Messenger API requirement: { recipient: { id: ... }, message: { text: ... } }
-    // If callSendAPI already wraps this, just pass the message object
+    // Send the formatted message
     await callSendAPI(sender_psid, { text: message });
 
   } catch (err) {
