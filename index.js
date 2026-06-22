@@ -252,6 +252,13 @@ async function handleMessage(psid, text, mid) {
   if (input.includes("tiktok.com"))
     return tiktokCommand(psid, (id, msg) => callSendAPI(id, msg, mid), text);
 
+  // Anything starting with "/" that didn't match a known command above
+if (input.startsWith("/")) {
+  return send({
+    text: "❓ Unknown command. Type /menu or /help to see what I can do.",
+  });
+}
+
   return mistralCommand(psid, (id, msg) => callSendAPI(id, msg, mid), text);
 }
 
