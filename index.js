@@ -30,6 +30,9 @@ const fbApi = axios.create({
 // Compiled once — reused across every message
 const QUIZ_WRONG_PREFIX = "QUIZ_WRONG:";
 
+// Facebook error code for "No matching user found" — safe to ignore/silence
+const FB_NO_MATCHING_USER_CODE = 100;
+
 // --- Messenger Profile Configuration ---
 async function setMessengerProfile() {
   try {
@@ -204,7 +207,7 @@ async function handleMessage(psid, text, mid) {
   await Promise.all([
     sendAction(psid, "mark_seen"),
     sendAction(psid, "typing_on"),
-  ]).catch((err) => console.error("Action Error:", err.message));
+  ]);
 
   const input = text.toLowerCase().trim();
   const send = (msg) => callSendAPI(psid, msg, mid);
@@ -253,18 +256,24 @@ async function handleMessage(psid, text, mid) {
     return tiktokCommand(psid, (id, msg) => callSendAPI(id, msg, mid), text);
 
   // Anything starting with "/" that didn't match a known command above
-if (input.startsWith("/")) {
-  return send({
-    text: "❓ Unknown command. Type /menu or /help to see what I can do.",
-  });
-}
+  if (input.startsWith("/")) {
+    return send({
+      text: "❓ Unknown command. Type /menu or /help to see what I can do.",
+    });
+  }
 
   return mistralCommand(psid, (id, msg) => callSendAPI(id, msg, mid), text);
 }
 
 // --- API Helpers ---
 async function sendAction(psid, action) {
-  return fbApi.post("", { recipient: { id: psid }, sender_action: action });
+  try {
+    return await fbApi.post("", { recipient: { id: psid }, sender_action: action });
+  } catch (err) {
+    const code = err.response?.data?.error?.code;
+    if (code === FB_NO_MATCHING_USER_CODE) return; // No matching user — silently ignore
+    console.error("Action Error:", err.response?.data || err.message);
+  }
 }
 
 async function callSendAPI(psid, response, replyMid = null) {
@@ -296,6 +305,8 @@ async function callSendAPI(psid, response, replyMid = null) {
       });
     }
   } catch (err) {
+    const code = err.response?.data?.error?.code;
+    if (code === FB_NO_MATCHING_USER_CODE) return; // No matching user — silently ignore
     console.error(
       "Send Error:",
       JSON.stringify(err.response?.data, null, 2) || err.message,
