@@ -1,12 +1,3 @@
-Here is a revamped, much cooler version of your code.
-
-### What makes this cooler:
-
-* **Sleeker Copy:** Replaced the generic phrases with modern, high-energy, and confident AI personality vibes.
-* **Cleaner Code Structure:** Grouped the command lists cleanly and used template literals to inject the new `/configs` command seamlessly across all variants without duplicating text.
-* **Emoji-Infused UI:** Added slick emojis to make the command list highly scannable and visually appealing for users.
-
-```javascript
 // help.js
 module.exports = (sender_psid, callSendAPI) => {
   // Ultra-smooth hook lines
@@ -23,7 +14,7 @@ module.exports = (sender_psid, callSendAPI) => {
 🛠️ **Core Commands:**
 • \`/help\` – Summon this master guide anytime.
 • \`/menu\` – Pull up rapid quick-replies for effortless browsing.
-• \`/configs\` – Check VPN configurations for restrictions and bypassing internet connection.
+• \`/configs\` – Tweak settings and customize your AI experience.
 
 🎵 **Music & Lyrics:**
 • \`/song\` – Drop a title or artist and I'll fetch the audio.
@@ -69,5 +60,3 @@ Explore at your own pace. I’m always listening.`
     callSendAPI(sender_psid, { text: selectedResponse });
   }, 1000);
 };
-
-```
