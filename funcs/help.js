@@ -23,7 +23,7 @@ module.exports = (sender_psid, callSendAPI) => {
 🛠️ **Core Commands:**
 • \`/help\` – Summon this master guide anytime.
 • \`/menu\` – Pull up rapid quick-replies for effortless browsing.
-• \`/configs\` – Tweak settings and customize your AI experience.
+• \`/configs\` – Check VPN configurations for restrictions and bypassing internet connection.
 
 🎵 **Music & Lyrics:**
 • \`/song\` – Drop a title or artist and I'll fetch the audio.
